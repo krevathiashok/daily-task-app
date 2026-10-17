@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
   const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem("tasks");
+    return savedTasks ? JSON.parse(savedTasks) : [];
+  });
   const [filter, setFilter] = useState("All");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
 
+  const [apiTasks, setApiTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
   // Add a new task
-  function addTask() {
+
+  async function addTask() {
     if (task.trim() === "") return;
 
     const newTask = {
@@ -19,6 +30,28 @@ function App() {
 
     setTasks([...tasks, newTask]);
     setTask("");
+
+    try {
+      const response = await fetch("http://localhost:3001/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: newTask.title,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save task to backend");
+      }
+
+      const savedTask = await response.json();
+
+      console.log("Task saved to backend:", savedTask);
+    } catch (error) {
+      console.error("Backend save failed:", error);
+    }
   }
 
   // Mark a task as completed
@@ -76,6 +109,53 @@ function App() {
   const pendingCount = tasks.filter((item) => !item.completed).length;
 
   const completedCount = tasks.filter((item) => item.completed).length;
+
+  useEffect(() => {
+    async function loadTasks() {
+      try {
+        const response = await fetch("http://localhost:3001/tasks");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks");
+        }
+
+        const data = await response.json();
+
+        console.log("Tasks from API:", data);
+        setApiTasks(data);
+      } catch (error) {
+        console.error("Error loading tasks:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadTasks();
+  }, []);
+
+  async function createBackendTask(title) {
+    try {
+      const response = await fetch("http://localhost:3001/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: title }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create task");
+      }
+
+      const newTask = await response.json();
+
+      setApiTasks((previousTasks) => [...previousTasks, newTask]);
+
+      console.log("Created task:", newTask);
+    } catch (error) {
+      console.error("POST request failed:", error);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-8">
@@ -286,6 +366,45 @@ function App() {
               ))
             )}
           </div>
+        </section>
+        <section className="mt-6 rounded-xl border border-purple-200 p-4">
+          <h2 className="mb-3 text-lg font-bold">Tasks from Backend API</h2>
+          <button
+            onClick={() => createBackendTask("Learn Node.js")}
+            className="rounded-lg bg-purple-600 px-4 py-2 text-white"
+          >
+            Test Backend POST
+          </button>
+
+          {apiTasks.length === 0 ? (
+            <p className="text-gray-500">No tasks received yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {apiTasks.map((item) => (
+                <li key={item.id} className="rounded-lg bg-gray-50 p-3">
+                  {item.title}
+                  <span className="ml-2 text-sm text-gray-500">
+                    {item.completed ? "Completed" : "Pending"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <section>
+            <h2>Tasks from PostgreSQL</h2>
+
+            {loading ? (
+              <p>Loading tasks...</p>
+            ) : apiTasks.length === 0 ? (
+              <p>No tasks found.</p>
+            ) : (
+              apiTasks.map((item) => (
+                <p key={item.id}>
+                  {item.title} — {item.completed ? "Completed" : "Pending"}
+                </p>
+              ))
+            )}
+          </section>
         </section>
       </main>
     </div>

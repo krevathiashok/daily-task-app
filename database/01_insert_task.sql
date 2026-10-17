@@ -1,0 +1,8 @@
+CREATE TABLE tasks (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    title TEXT NOT NULL,
+    completed BOOLEAN DEFAULT FALSE
+);
+
+INSERT INTO tasks (title, completed)
+VALUES ('Learn PostgreSQL', FALSE);
