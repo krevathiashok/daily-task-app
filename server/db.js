@@ -1,3 +1,5 @@
+console.log("POST route: inserting into PostgreSQL");
+
 require("dotenv").config();
 
 const { Pool } = require("pg");
