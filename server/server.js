@@ -222,6 +222,10 @@ app.get("/db-test", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(process.env.PORT || PORT, () => {
+    console.log(`Backend running on port ${process.env.PORT || PORT}`);
+  });
+}
+
+module.exports = app;
