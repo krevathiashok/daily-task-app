@@ -9,7 +9,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const API_URL = "http://localhost:3001/tasks";
+  const API_URL = "https://daily-task-api-eight.vercel.app/tasks";
 
   // Load tasks from PostgreSQL through the backend when the app opens.
   useEffect(() => {
