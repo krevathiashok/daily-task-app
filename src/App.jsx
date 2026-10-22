@@ -18,7 +18,7 @@ function App() {
         setLoading(true);
         setError("");
 
-        const response = await fetch("http://localhost:3001/tasks");
+        const response = await fetch(API_URL);
 
         if (!response.ok) {
           throw new Error("Failed to load tasks");
